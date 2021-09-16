@@ -9,10 +9,12 @@
 Backend for [Practicum](https://practicum.yandex.com/web/) online bootcamp diploma developed with the following stack:
 * Express, MongoDB, Mongoose, Joi, Winston
 
-Repository for UI dev:
-* <a href="https://github.com/avtorsky/movies-explorer-frontend" target="_blank">/movies-explorer-frontend</a>
+Repository for UI dev: <a href="https://github.com/avtorsky/movies-explorer-frontend" target="_blank">/movies-explorer-frontend</a>
 
 ## Changelog
+Release 20210916:
+* fix(./app.js): level-1 improvements after code review 
+
 Release 20210912:
 * ci: Nginx reproxy configuration
 * feat(./app.js): CORS configuration

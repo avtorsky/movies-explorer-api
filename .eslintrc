@@ -8,8 +8,6 @@
           "_id"
         ]
       }
-    ],
-    "no-console": "off",
-    "no-useless-escape": "off"
+    ]
   }
 }

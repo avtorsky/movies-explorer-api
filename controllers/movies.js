@@ -43,28 +43,31 @@ const createMovie = (req, res, next) => {
     .then((movie) => res.status(codeStatusCreated).send(movie))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError(movieValidationError);
+        return next(new BadRequestError(movieValidationError));
       }
-      next();
+      return next(err);
     });
 };
 
 const deleteMovie = (req, res, next) => {
-  Movie.findByIdAndDelete(req.params.id)
+  Movie.findById(req.params.id)
     .then((movie) => {
       if (!movie) {
-        throw new NotFoundError(movieCastError);
+        return next(new NotFoundError(movieCastError));
       }
       if (JSON.stringify(movie.owner) !== JSON.stringify(req.user._id)) {
-        throw new ForbiddenError(movieAuthError);
+        return next(new ForbiddenError(movieAuthError));
       }
-      return res.status(codeStatusOk).send({ message: movieDeleted });
+      return movie.remove()
+        .then(() => {
+          res.status(codeStatusOk).send({ message: movieDeleted });
+        });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError(movieCastError);
+        return next(new BadRequestError(movieCastError));
       }
-      next();
+      return next(err);
     });
 };
 

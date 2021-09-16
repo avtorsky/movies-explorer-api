@@ -4,7 +4,7 @@ const User = require('../models/user');
 const {
   userValidationError,
   userCastError,
-  userAuthError,
+  userCredentialsError,
   userConflictError,
 } = require('../utils/errors');
 const {
@@ -12,7 +12,6 @@ const {
   codeStatusOk,
   codeStatusCreated,
   userLogOut,
-  JWT_SECRET,
 } = require('../utils/config');
 const BadRequestError = require('../errors/bad-request');
 const UnauthorizedError = require('../errors/unauthorized');
@@ -20,18 +19,18 @@ const NotFoundError = require('../errors/not-found');
 const ConflictError = require('../errors/conflict');
 
 const getUser = (req, res, next) => {
-  User.findById(req.user._id).select('+password')
+  User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        throw new NotFoundError(userCastError);
+        return next(new NotFoundError(userCastError));
       }
       return res.status(codeStatusOk).send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new BadRequestError(userCastError);
+        return next(new BadRequestError(userCastError));
       }
-      next();
+      return next(err);
     });
 };
 
@@ -45,19 +44,19 @@ const updateUser = (req, res, next) => {
   )
     .then((user) => {
       if (!user) {
-        throw new NotFoundError(userCastError);
+        return next(new NotFoundError(userCastError));
       }
       return res.status(codeStatusOk).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError(userValidationError);
+        return next(new BadRequestError(userValidationError));
       } if (err.name === 'CastError') {
-        throw new BadRequestError(userCastError);
+        return next(new BadRequestError(userCastError));
       } if (err.code === 11000) {
-        throw new ConflictError(userConflictError);
+        return next(new ConflictError(userConflictError));
       }
-      next();
+      return next(err);
     });
 };
 
@@ -66,13 +65,10 @@ const createUser = (req, res, next) => {
     email, name, password,
   } = req.body;
 
-  if (!email || !password) {
-    throw new BadRequestError(userValidationError);
-  }
-  return User.findOne({ email })
+  User.findOne({ email })
     .then((user) => {
       if (user) {
-        next(new ConflictError(userConflictError));
+        return next(new ConflictError(userConflictError));
       } return bcrypt.hash(password, 10);
     })
     .then((hash) => User.create({
@@ -84,31 +80,38 @@ const createUser = (req, res, next) => {
     }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError(userValidationError);
+        return next(new BadRequestError(userValidationError));
       }
-      next();
+      return next(err);
     });
 };
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
+  const { NODE_ENV, JWT_SECRET } = process.env;
 
-  User.findUserByCredentials(email, password)
+  User.findOne({ email }).select('+password')
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
-      res
-        .status(codeStatusOk)
-        .cookie('token', token, {
-          httpOnly: true,
-          maxAge: maxAgeValue,
-          secure: true,
-          sameSite: 'none',
-        })
-        .send({ token });
+      if (!user) {
+        return next(new UnauthorizedError(userCredentialsError));
+      }
+      return bcrypt.compare(password, user.password)
+        .then((match) => {
+          if (!match) {
+            return next(new UnauthorizedError(userCredentialsError));
+          }
+          const token = jwt.sign({ _id: user._id },
+            NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+            { expiresIn: '7d' });
+          return res.cookie('token', token, {
+            httpOnly: true,
+            maxAge: maxAgeValue,
+            secure: true,
+            sameSite: 'none',
+          }).status(codeStatusCreated).send({ token });
+        });
     })
-    .catch(() => {
-      next(new UnauthorizedError(userAuthError));
-    });
+    .catch(next);
 };
 
 const logout = (req, res) => {
