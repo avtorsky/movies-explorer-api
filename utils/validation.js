@@ -1,4 +1,22 @@
 const { celebrate, Joi } = require('celebrate');
+const { default: isURL } = require('validator/lib/isURL');
+const BadRequestError = require('../errors/bad-request');
+const { movieUrlError } = require('./errors');
+
+const validateURL = (value) => {
+  const valid = isURL(value, { require_protocol: true });
+  if (valid) {
+    return value;
+  }
+  throw new BadRequestError(movieUrlError);
+};
+
+const validateUser = celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30).required(),
+    email: Joi.string().email().required(),
+  }),
+});
 
 const validateUserForm = celebrate({
   body: Joi.object().keys({
@@ -19,16 +37,6 @@ const validateUserCredentials = celebrate({
   }),
 });
 
-const validateUserName = celebrate({
-  body: Joi.object().keys({
-    name: Joi.string()
-      .alphanum()
-      .min(2)
-      .max(30)
-      .required(),
-  }),
-});
-
 const validateNewMovie = celebrate({
   body: Joi.object().keys({
     country: Joi.string().required(),
@@ -36,9 +44,9 @@ const validateNewMovie = celebrate({
     duration: Joi.number().required(),
     year: Joi.string().required(),
     description: Joi.string().required(),
-    image: Joi.string().required().pattern(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/m),
-    trailer: Joi.string().required().pattern(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/m),
-    thumbnail: Joi.string().required().pattern(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/m),
+    image: Joi.string().required().custom(validateURL),
+    trailer: Joi.string().required().custom(validateURL),
+    thumbnail: Joi.string().required().custom(validateURL),
     movieId: Joi.number().required(),
     nameRU: Joi.string().required(),
     nameEN: Joi.string().required(),
@@ -47,14 +55,14 @@ const validateNewMovie = celebrate({
 
 const validateMovieId = celebrate({
   params: Joi.object().keys({
-    id: Joi.string().hex().required(),
+    id: Joi.string().hex().length(24).required(),
   }),
 });
 
 module.exports = {
+  validateUser,
   validateUserForm,
   validateUserCredentials,
-  validateUserName,
   validateNewMovie,
   validateMovieId,
 };

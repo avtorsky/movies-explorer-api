@@ -27,7 +27,7 @@ const movieSchema = new mongoose.Schema({
     type: String,
     validate: {
       validator(string) {
-        return isURL(string);
+        return isURL(string, { require_protocol: true });
       },
       message: movieUrlError,
     },
@@ -37,7 +37,7 @@ const movieSchema = new mongoose.Schema({
     type: String,
     validate: {
       validator(string) {
-        return isURL(string);
+        return isURL(string, { require_protocol: true });
       },
       message: movieUrlError,
     },
@@ -47,7 +47,7 @@ const movieSchema = new mongoose.Schema({
     type: String,
     validate: {
       validator(string) {
-        return isURL(string);
+        return isURL(string, { require_protocol: true });
       },
       message: movieUrlError,
     },

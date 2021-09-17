@@ -8,6 +8,7 @@ const {
   userConflictError,
 } = require('../utils/errors');
 const {
+  JWT_SECRET_DEV,
   maxAgeValue,
   codeStatusOk,
   codeStatusCreated,
@@ -26,12 +27,7 @@ const getUser = (req, res, next) => {
       }
       return res.status(codeStatusOk).send(user);
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new BadRequestError(userCastError));
-      }
-      return next(err);
-    });
+    .catch(next);
 };
 
 const updateUser = (req, res, next) => {
@@ -101,7 +97,7 @@ const login = (req, res, next) => {
             return next(new UnauthorizedError(userCredentialsError));
           }
           const token = jwt.sign({ _id: user._id },
-            NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+            NODE_ENV === 'production' ? JWT_SECRET : JWT_SECRET_DEV,
             { expiresIn: '7d' });
           return res.cookie('token', token, {
             httpOnly: true,

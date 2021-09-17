@@ -12,6 +12,9 @@ Backend for [Practicum](https://practicum.yandex.com/web/) online bootcamp diplo
 Repository for UI dev: <a href="https://github.com/avtorsky/movies-explorer-frontend" target="_blank">/movies-explorer-frontend</a>
 
 ## Changelog
+Release 20210918:
+* fix(./utils/validation.js): Joi scheme updates
+
 Release 20210916:
 * fix(./app.js): level-1 improvements after code review 
 
