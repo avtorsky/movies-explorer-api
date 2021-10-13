@@ -111,7 +111,11 @@ const login = (req, res, next) => {
 };
 
 const logout = (req, res) => {
-  res.clearCookie('token').send({ message: userLogOut });
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+  }).send({ message: userLogOut });
 };
 
 module.exports = {

@@ -23,7 +23,6 @@ const validateUserForm = celebrate({
     email: Joi.string().required().email(),
     password: Joi.string().required().min(2),
     name: Joi.string()
-      .alphanum()
       .min(2)
       .max(30)
       .required(),
